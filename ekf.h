@@ -1,6 +1,6 @@
 /**
  * \file ekf.h
- * \details déclaration des fonctions et types de ekf.c
+ * \details Declaration of functions and types from ekf.c
  * \author Tomás Salvado Robalo
  * \date 2024
 */
@@ -9,7 +9,7 @@
 
 
 /* ------------------------------------------------------------------------ */
-/*                   E N T Ê T E S    S T A N D A R D S                     */
+/*                      S T A N D A R D    H E A D E R S                    */
 /* ------------------------------------------------------------------------ */
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,83 +21,83 @@
 
 
 /* ------------------------------------------------------------------------ */
-/*              C O N S T A N T E S     S Y M B O L I Q U E S               */
+/*                    S Y M B O L I C    C O N S T A N T S                  */
 /* ------------------------------------------------------------------------ */
-#define QN 3.08 //Valeur de la charge de la cellule
-#define SAMPLE_RATE 1 //Fréquence d'échantillonage
-#define R1 0.009818410271493//Valeur de la résistance de la cellule
+#define QN 3.08 //Cell charge value
+#define SAMPLE_RATE 1 //Sampling frequency
+#define R1 0.009818410271493 //Cell resistance value
 #define C1 15639.54740330107
 #define R2 0.031463057438081
 #define C2 3933.292323912280
 
 /* ------------------------------------------------------------------------ */
-/*                    M A C R O    F O N C T I O N S                        */
+/*                        M A C R O    F U N C T I O N S                    */
 /* ------------------------------------------------------------------------ */
 
 
 
 /* ------------------------------------------------------------------------ */
-/*              D É F I N I T I O N S   D E   T Y P E S                     */
+/*                      T Y P E   D E F I N I T I O N S                     */
 /* ------------------------------------------------------------------------ */
 
 /**
  * \struct ekf_t
- * \brief Structure représentant un filtre de Kalman étendu
+ * \brief Structure representing an extended Kalman filter
  * 
- * La structure contient les matrices et vecteurs nécessaires pour le filtre de Kalman étendu.
+ * The structure contains the matrices and vectors needed for the extended Kalman filter.
 */
 typedef struct {
-    double x[3][1]; /*!< Vecteur d'état */
-    double P[3][3]; /*!< Matrice de covariance de l'état */
-    double Q[3][3]; /*!< Matrice de covariance du bruit de processus */
-    double R; /*!< Matrice de covariance du bruit de mesure */
-    double A[3][3]; /*!< Matrice de transition de l'état */
-    double B[3][1]; /*!< Matrice de contrôle de l'état */
-    double K[3][1]; /*!< Matrice de gain de Kalman */
+    double x[3][1]; /*!< State vector */
+    double P[3][3]; /*!< State covariance matrix */
+    double Q[3][3]; /*!< Process noise covariance matrix */
+    double R; /*!< Measurement noise covariance matrix */
+    double A[3][3]; /*!< State transition matrix */
+    double B[3][1]; /*!< State control matrix */
+    double K[3][1]; /*!< Kalman gain matrix */
 } ekf_t;
 
 /**
  * \struct estimation_t
- * \brief Structure représentant une estimation
+ * \brief Structure representing an estimation
  * 
- * La structure contient les valeurs de l'état de charge et de la tension.
+ * The structure contains the state of charge and voltage values.
 */
 typedef struct {
-    double soc; /*!< Valeur de l'état de charge */
-    double voltage; /*!< valeur de la tension */
-}estimation_t;
+    double soc; /*!< State of charge value */
+    double voltage; /*!< Voltage value */
+} estimation_t;
 
 /**
  * \struct mesure_t
- * \brief Structure représentant une mesure
+ * \brief Structure representing a measurement
  * 
- * La structure contient les valeurs de la tension et du courant.
- * Lorsque le courant est négatif cela signifie que la batterie se charge 
- * et lorsqu'il est positif cela signifie que la batterie se décharge.
+ * The structure contains the voltage and current values.
+ * When the current is negative, it indicates the battery is charging,
+ * and when it is positive, it indicates the battery is discharging.
 */
-typedef struct{
-    double voltage; /*!< Valeur de la tension */
-    double current; /*!< Valeur du courant */
-}mesure_t;
+typedef struct {
+    double voltage; /*!< Voltage value */
+    double current; /*!< Current value */
+} measure_t;
 
 /* ------------------------------------------------------------------------ */
-/*            P R O T O T Y P E S    D E    F O N C T I O N S               */
+/*                        F U N C T I O N   P R O T O T Y P E S             */
 /* ------------------------------------------------------------------------ */
 
 /**
  * \fn ekf_t * ekf_init(void)
- * \brief Initialisation de l'ekf
- * \return ekf_t * pointeur sur l'ekf
+ * \brief Initialization of the ekf
+ * \return ekf_t * pointer to the ekf
  */
 ekf_t * ekf_init(void);
 
 /**
- * \fn estimation_t* ekf_run(ekf_t * ekf,mesure_t * mesure)
- * \brief Exécution de l'ekf
- * \param ekf_t * ekf pointeur sur l'ekf
- * \param mesure_t * mesure pointeur sur la mesure
- * \return estimation_t* pointeur sur l'estimation
+ * \fn estimation_t* ekf_run(ekf_t * ekf, mesure_t * mesure)
+ * \brief Execution of the ekf
+ * \param ekf_t * ekf pointer to the ekf
+ * \param measure_t * mesure pointer to the measurement
+ * \return estimation_t* pointer to the estimation
  */
-estimation_t* ekf_run(ekf_t * ekf,mesure_t * mesure);
+estimation_t* ekf_run(ekf_t * ekf, measure_t * measure);
 
 #endif

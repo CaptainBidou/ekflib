@@ -9,13 +9,6 @@
 /*                   E N T Ê T E S    S T A N D A R D S                     */
 /* ------------------------------------------------------------------------ */
 #include "ekf.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <unistd.h>
-#include <float.h>
-#include <limits.h>
-
 /* ------------------------------------------------------------------------ */
 /*              D É F I N I T I O N S   D E   T Y P E S                     */
 /* ------------------------------------------------------------------------ */
@@ -32,21 +25,21 @@ typedef struct {
 /* ------------------------------------------------------------------------ */
 /*            P R O T O T Y P E S    D E    F O N C T I O N S               */
 /* ------------------------------------------------------------------------ */
-double h(ekf_t * ekf,mesure_t * mesure);
+double h(ekf_t * ekf,measure_t * mesure);
 
-double h_derivative(ekf_t * ekf,mesure_t * mesure);
+double h_derivative(ekf_t * ekf,measure_t * mesure);
 
-double R0(ekf_t * ekf,mesure_t * mesure);
+double R0(ekf_t * ekf,measure_t * mesure);
 
-double R0_derivative(ekf_t * ekf,mesure_t * mesure);
+double R0_derivative(ekf_t * ekf,measure_t * mesure);
 
-double g(ekf_t * ekf,mesure_t * mesure);
+double g(ekf_t * ekf,measure_t * mesure);
 
-dg_t* g_derivative(ekf_t * ekf,mesure_t * mesure);
+dg_t* g_derivative(ekf_t * ekf,measure_t * mesure);
 
-ekf_t * ekfPredict(ekf_t * ekf,mesure_t * mesure);
+ekf_t * ekfPredict(ekf_t * ekf,measure_t * mesure);
 
-ekf_t * ekfCorrect(ekf_t * ekf,mesure_t * mesure);
+ekf_t * ekfCorrect(ekf_t * ekf,measure_t * mesure);
 
 /* ------------------------------------------------------------------------ */
 /*                  C O D E    D E S    F O N C T I O N S                   */
@@ -118,8 +111,9 @@ ekf_t * ekf_init(void){
  * \fn void ekf_run(ekf_t * ekf)
  * \brief Exécution de l'ekf
  * \param ekf_t * ekf pointeur sur l'ekf
+ * \param measure_t * mesure pointeur sur la mesure
  */
-estimation_t* ekf_run(ekf_t * ekf,mesure_t * mesure){
+estimation_t* ekf_run(ekf_t * ekf,measure_t * mesure){
     //prédiction
     ekf = ekfPredict(ekf,mesure);
     //correction
@@ -137,12 +131,12 @@ estimation_t* ekf_run(ekf_t * ekf,mesure_t * mesure){
 }
 
 /**
- * \fn double h(ekf_t * ekf,mesure_t * mesure)
+ * \fn double h(ekf_t * ekf,measure_t * mesure)
  * \brief fonction de mesure
  * \param ekf_t * ekf pointeur sur l'ekf
- * \param mesure_t * mesure pointeur sur la mesure
+ * \param measure_t * mesure pointeur sur la mesure
  */
-double h(ekf_t * ekf,mesure_t * mesure){
+double h(ekf_t * ekf,measure_t * mesure){
     double x = ekf->x[2][0];
     return pow(10,4)*(pow(x,9)*0.140437566214432+\
     pow(x,8)*-0.693293580320924+pow(x,7)*1.448317451181394 + \
@@ -152,12 +146,12 @@ double h(ekf_t * ekf,mesure_t * mesure){
 }
 
 /**
- * \fn double h_derivative(ekf_t * ekf,mesure_t * mesure)
+ * \fn double h_derivative(ekf_t * ekf,measure_t * mesure)
  * \brief dérivée de la fonction de mesure
  * \param ekf_t * ekf pointeur sur l'ekf
- * \param mesure_t * mesure pointeur sur la mesure
+ * \param measure_t * mesure pointeur sur la mesure
  */
-double h_derivative(ekf_t * ekf,mesure_t * mesure){
+double h_derivative(ekf_t * ekf,measure_t * mesure){
     double x = ekf->x[2][0];
     return pow(10,4)*(9*pow(x,8)*0.140437566214432+\
     8*pow(x,7)*-0.693293580320924+7*pow(x,6)*1.448317451181394 + \
@@ -168,12 +162,12 @@ double h_derivative(ekf_t * ekf,mesure_t * mesure){
 
 
 /**
- * \fn double R0(ekf_t * ekf,mesure_t * mesure)
+ * \fn double R0(ekf_t * ekf,measure_t * mesure)
  * \brief fonction de mesure
  * \param ekf_t * ekf pointeur sur l'ekf
- * \param mesure_t * mesure pointeur sur la mesure
+ * \param measure_t * mesure pointeur sur la mesure
  */
-double R0(ekf_t * ekf,mesure_t * mesure){
+double R0(ekf_t * ekf,measure_t * mesure){
     double x = ekf->x[2][0];
     return pow(10,3)*(pow(x,9)*0.440568380336331+\
     pow(x,8)*-2.188575118770938+pow(x,7)*4.662025929324535+\
@@ -183,12 +177,12 @@ double R0(ekf_t * ekf,mesure_t * mesure){
 }
 
 /**
- * \fn double R0_derivative(ekf_t * ekf,mesure_t * mesure)
+ * \fn double R0_derivative(ekf_t * ekf,measure_t * mesure)
  * \brief dérivée de la fonction de mesure
  * \param ekf_t * ekf pointeur sur l'ekf
- * \param mesure_t * mesure pointeur sur la mesure
+ * \param measure_t * mesure pointeur sur la mesure
  */
-double R0_derivative(ekf_t * ekf,mesure_t * mesure){
+double R0_derivative(ekf_t * ekf,measure_t * mesure){
     double x = ekf->x[2][0];
     return pow(10,3)*(9*pow(x,8)*0.440568380336331+\
     8*pow(x,7)*-2.188575118770938+7*pow(x,6)*4.662025929324535+\
@@ -198,22 +192,22 @@ double R0_derivative(ekf_t * ekf,mesure_t * mesure){
 }
 
 /**
- * \fn double g(ekf_t * ekf,mesure_t * mesure)
+ * \fn double g(ekf_t * ekf,measure_t * mesure)
  * \brief fonction de mesure
  * \param ekf_t * ekf pointeur sur l'ekf
- * \param mesure_t * mesure pointeur sur la mesure
+ * \param measure_t * mesure pointeur sur la mesure
  */
-double g(ekf_t * ekf,mesure_t * mesure){
+double g(ekf_t * ekf,measure_t * mesure){
     return ekf->x[0][0] - ekf->x[1][0] - R0(ekf,mesure)*mesure->current + h(ekf,mesure);
 }
 
 /**
- * \fn double g_derivative(ekf_t * ekf,mesure_t * mesure)
+ * \fn double g_derivative(ekf_t * ekf,measure_t * mesure)
  * \brief dérivée de la fonction de mesure
  * \param ekf_t * ekf pointeur sur l'ekf
- * \param mesure_t * mesure pointeur sur la mesure
+ * \param measure_t * mesure pointeur sur la mesure
  */
-dg_t* g_derivative(ekf_t * ekf,mesure_t * mesure){
+dg_t* g_derivative(ekf_t * ekf,measure_t * mesure){
     dg_t * dg = (dg_t *)malloc(sizeof(dg_t));
     dg->mat[0] = -1;
     dg->mat[1] = -1;
@@ -223,12 +217,12 @@ dg_t* g_derivative(ekf_t * ekf,mesure_t * mesure){
 }
 
 /**
- * \fn ekf_t * ekfPredict(ekf_t * ekf,mesure_t * mesure)
+ * \fn ekf_t * ekfPredict(ekf_t * ekf,measure_t * mesure)
  * \brief prédiction de l'ekf
  * \param ekf_t * ekf pointeur sur l'ekf
- * \param mesure_t * mesure pointeur sur la mesure
+ * \param measure_t * mesure pointeur sur la mesure
  */
-ekf_t * ekfPredict(ekf_t * ekf,mesure_t * mesure){
+ekf_t * ekfPredict(ekf_t * ekf,measure_t * mesure){
     //prédiction de l'état
     ekf->x[0][0] = ekf->x[0][0]*(ekf->A[0][0]+ekf->A[0][1]+ekf->A[0][2]) + ekf->B[0][0]*mesure->current;
     ekf->x[1][0] = ekf->x[1][0]*(ekf->A[1][0]+ekf->A[1][1]+ekf->A[1][2]) + ekf->B[1][0]*mesure->current;
@@ -259,12 +253,12 @@ ekf_t * ekfPredict(ekf_t * ekf,mesure_t * mesure){
 }
 
 /**
- * \fn ekf_t * ekfCorrect(ekf_t * ekf,mesure_t * mesure)
+ * \fn ekf_t * ekfCorrect(ekf_t * ekf,measure_t * mesure)
  * \brief correction de l'ekf
  * \param ekf_t * ekf pointeur sur l'ekf
- * \param mesure_t * mesure pointeur sur la mesure
+ * \param measure_t * mesure pointeur sur la mesure
  */
-ekf_t * ekfCorrect(ekf_t * ekf,mesure_t * mesure){
+ekf_t * ekfCorrect(ekf_t * ekf,measure_t * mesure){
     
     dg_t* dg = g_derivative(ekf,mesure);
     double index0 = dg->mat[0]*ekf->P[0][0]+dg->mat[1]*ekf->P[1][0]+dg->mat[2]*ekf->P[2][0];

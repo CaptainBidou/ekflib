@@ -6,7 +6,7 @@
 */
 #ifndef EKF_H
 #define EKF_H
-#endif
+
 
 /* ------------------------------------------------------------------------ */
 /*                   E N T Ê T E S    S T A N D A R D S                     */
@@ -99,3 +99,5 @@ ekf_t * ekf_init(void);
  * \return estimation_t* pointeur sur l'estimation
  */
 estimation_t* ekf_run(ekf_t * ekf,mesure_t * mesure);
+
+#endif

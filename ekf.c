@@ -25,7 +25,7 @@
  * 
  */
 typedef struct {
-    double mat[3][1];
+    double mat[3];
 }dg_t;
 
 
@@ -89,7 +89,7 @@ ekf_t * ekf_init(void){
     ekf->Q[2][2] = 0.0001;
 
     //initialisation de la matrice de covariance du bruit de mesure
-    ekf->R = 0.01;
+    ekf->R = 0.2;
 
     //initialisation de la matrice de transition de l'état
     ekf->A[0][0] = 1-(SAMPLE_RATE/(R1*C1));
@@ -166,6 +166,7 @@ double h_derivative(ekf_t * ekf,mesure_t * mesure){
     2*pow(x,1)*-0.018961803736654 + 1*0.001657801378501);
 }
 
+
 /**
  * \fn double R0(ekf_t * ekf,mesure_t * mesure)
  * \brief fonction de mesure
@@ -214,9 +215,9 @@ double g(ekf_t * ekf,mesure_t * mesure){
  */
 dg_t* g_derivative(ekf_t * ekf,mesure_t * mesure){
     dg_t * dg = (dg_t *)malloc(sizeof(dg_t));
-    dg->mat[0][0] = -1;
-    dg->mat[1][0] = -1;
-    dg->mat[2][0] = h_derivative(ekf,mesure) - R0_derivative(ekf,mesure)*mesure->current;
+    dg->mat[0] = -1;
+    dg->mat[1] = -1;
+    dg->mat[2] = h_derivative(ekf,mesure) - R0_derivative(ekf,mesure)*mesure->current;
     return dg;
 
 }
@@ -229,19 +230,31 @@ dg_t* g_derivative(ekf_t * ekf,mesure_t * mesure){
  */
 ekf_t * ekfPredict(ekf_t * ekf,mesure_t * mesure){
     //prédiction de l'état
-    ekf->x[0][0] = ekf->x[0][0]*(ekf->A[0][0]+ekf->A[1][0]+ekf->A[2][0]) + ekf->B[0][0]*mesure->current;
-    ekf->x[1][0] = ekf->x[1][0]*(ekf->A[0][1]+ekf->A[1][1]+ekf->A[2][1]) + ekf->B[1][0]*mesure->current;
-    ekf->x[2][0] = ekf->x[2][0]*(ekf->A[0][2]+ekf->A[1][2]+ekf->A[2][2]) + ekf->B[2][0]*mesure->current;
-    //prédiction de la covariance de l'état
-    ekf->P[0][0] = ekf->A[0][0]*ekf->P[0][0]*ekf->A[0][0] + ekf->Q[0][0];
-    ekf->P[0][1] = ekf->A[0][0]*ekf->P[0][1]*ekf->A[1][0] + ekf->Q[0][1];
-    ekf->P[0][2] = ekf->A[0][0]*ekf->P[0][2]*ekf->A[2][0] + ekf->Q[0][2];
-    ekf->P[1][0] = ekf->A[1][1]*ekf->P[1][0]*ekf->A[0][1] + ekf->Q[1][0];
-    ekf->P[1][1] = ekf->A[1][1]*ekf->P[1][1]*ekf->A[1][1] + ekf->Q[1][1];
-    ekf->P[1][2] = ekf->A[1][1]*ekf->P[1][2]*ekf->A[2][1] + ekf->Q[1][2];
-    ekf->P[2][0] = ekf->A[2][2]*ekf->P[2][0]*ekf->A[0][2] + ekf->Q[2][0];
-    ekf->P[2][1] = ekf->A[2][2]*ekf->P[2][1]*ekf->A[1][2] + ekf->Q[2][1];
-    ekf->P[2][2] = ekf->A[2][2]*ekf->P[2][2]*ekf->A[2][2] + ekf->Q[2][2];
+    ekf->x[0][0] = ekf->x[0][0]*(ekf->A[0][0]+ekf->A[0][1]+ekf->A[0][2]) + ekf->B[0][0]*mesure->current;
+    ekf->x[1][0] = ekf->x[1][0]*(ekf->A[1][0]+ekf->A[1][1]+ekf->A[1][2]) + ekf->B[1][0]*mesure->current;
+    ekf->x[2][0] = ekf->x[2][0]*(ekf->A[2][0]+ekf->A[2][1]+ekf->A[2][2]) + ekf->B[2][0]*mesure->current;
+    //prédiction de la covariance de l'état 
+    double P[3][3];
+    P[0][0] = ekf->A[0][0]*ekf->P[0][0]+ekf->A[0][1]*ekf->P[1][0]+ekf->A[0][2]*ekf->P[2][0];
+    P[0][1] = ekf->A[0][0]*ekf->P[0][1]+ekf->A[0][1]*ekf->P[1][1]+ekf->A[0][2]*ekf->P[2][1];
+    P[0][2] = ekf->A[0][0]*ekf->P[0][2]+ekf->A[0][1]*ekf->P[1][2]+ekf->A[0][2]*ekf->P[2][2];
+    P[1][0] = ekf->A[1][0]*ekf->P[0][0]+ekf->A[1][1]*ekf->P[1][0]+ekf->A[1][2]*ekf->P[2][0];
+    P[1][1] = ekf->A[1][0]*ekf->P[0][1]+ekf->A[1][1]*ekf->P[1][1]+ekf->A[1][2]*ekf->P[2][1];
+    P[1][2] = ekf->A[1][0]*ekf->P[0][2]+ekf->A[1][1]*ekf->P[1][2]+ekf->A[1][2]*ekf->P[2][2];
+    P[2][0] = ekf->A[2][0]*ekf->P[0][0]+ekf->A[2][1]*ekf->P[1][0]+ekf->A[2][2]*ekf->P[2][0];
+    P[2][1] = ekf->A[2][0]*ekf->P[0][1]+ekf->A[2][1]*ekf->P[1][1]+ekf->A[2][2]*ekf->P[2][1];
+    P[2][2] = ekf->A[2][0]*ekf->P[0][2]+ekf->A[2][1]*ekf->P[1][2]+ekf->A[2][2]*ekf->P[2][2];
+
+    ekf->P[0][0] = P[0][0]*ekf->A[0][0]+P[0][1]*ekf->A[0][1]+P[0][2]*ekf->A[0][2]+ekf->Q[0][0];
+    ekf->P[0][1] = P[0][0]*ekf->A[0][0]+P[0][1]*ekf->A[0][1]+P[0][2]*ekf->A[0][2]+ekf->Q[0][1];
+    ekf->P[0][2] = P[0][0]*ekf->A[0][0]+P[0][1]*ekf->A[0][1]+P[0][2]*ekf->A[0][2]+ekf->Q[0][2];
+    ekf->P[1][0] = P[1][0]*ekf->A[1][0]+P[1][1]*ekf->A[1][1]+P[1][2]*ekf->A[1][2]+ekf->Q[1][0];
+    ekf->P[1][1] = P[1][0]*ekf->A[1][0]+P[1][1]*ekf->A[1][1]+P[1][2]*ekf->A[1][2]+ekf->Q[1][1];
+    ekf->P[1][2] = P[1][0]*ekf->A[1][0]+P[1][1]*ekf->A[1][1]+P[1][2]*ekf->A[1][2]+ekf->Q[1][2];
+    ekf->P[2][0] = P[2][0]*ekf->A[2][0]+P[2][1]*ekf->A[2][1]+P[2][2]*ekf->A[2][2]+ekf->Q[2][0];
+    ekf->P[2][1] = P[2][0]*ekf->A[2][0]+P[2][1]*ekf->A[2][1]+P[2][2]*ekf->A[2][2]+ekf->Q[2][1];
+    ekf->P[2][2] = P[2][0]*ekf->A[2][0]+P[2][1]*ekf->A[2][1]+P[2][2]*ekf->A[2][2]+ekf->Q[2][2];
+    
     return ekf;
 }
 
@@ -254,18 +267,25 @@ ekf_t * ekfPredict(ekf_t * ekf,mesure_t * mesure){
 ekf_t * ekfCorrect(ekf_t * ekf,mesure_t * mesure){
     
     dg_t* dg = g_derivative(ekf,mesure);
-    double gain = dg->mat[0][0]*ekf->P[0][0]*dg->mat[0][0] + ekf->R;
+    double index0 = dg->mat[0]*ekf->P[0][0]+dg->mat[1]*ekf->P[1][0]+dg->mat[2]*ekf->P[2][0];
+    double index1 = dg->mat[0]*ekf->P[0][1]+dg->mat[1]*ekf->P[1][1]+dg->mat[2]*ekf->P[2][1];
+    double index2 = dg->mat[0]*ekf->P[0][2]+dg->mat[1]*ekf->P[1][2]+dg->mat[2]*ekf->P[2][2];
 
-    if(gain > DBL_MAX-1000){
+    double gain = index0*dg->mat[0]+index1*dg->mat[1]+index2*dg->mat[2]+ekf->R;
+    
+
+    if(gain > DBL_MAX/1000){
+        printf("gain = 0\n");
         gain = 0;
     }else{
         gain = 1/gain;
+        printf("gain = %f\n",gain);
     }
 
     //calcul du gain de Kalman
-    ekf->K[0][0] = (ekf->P[0][0]*dg->mat[0][0]+ekf->P[0][1]*dg->mat[1][0]+ekf->P[0][2]*dg->mat[2][0])*gain;
-    ekf->K[1][0] = (ekf->P[1][0]*dg->mat[0][1]+ekf->P[1][1]*dg->mat[1][1]+ekf->P[1][2]*dg->mat[2][1])*gain;
-    ekf->K[2][0] = (ekf->P[2][0]*dg->mat[0][2]+ekf->P[2][1]*dg->mat[1][2]+ekf->P[2][2]*dg->mat[2][2])*gain;
+    ekf->K[0][0] = (ekf->P[0][0]*dg->mat[0]+ekf->P[0][1]*dg->mat[1]+ekf->P[0][2]*dg->mat[2])*gain;
+    ekf->K[1][0] = (ekf->P[1][0]*dg->mat[0]+ekf->P[1][1]*dg->mat[1]+ekf->P[1][2]*dg->mat[2])*gain;
+    ekf->K[2][0] = (ekf->P[2][0]*dg->mat[0]+ekf->P[2][1]*dg->mat[1]+ekf->P[2][2]*dg->mat[2])*gain;
 
     double gResult = g(ekf,mesure);
 
@@ -276,19 +296,54 @@ ekf_t * ekfCorrect(ekf_t * ekf,mesure_t * mesure){
 
     //correction de la covariance de l'état
     dg = g_derivative(ekf,mesure);
-    double ikdg[3][3] = {1-ekf->K[0][0]*dg->mat[0][0],-ekf->K[0][0]*dg->mat[0][1],-ekf->K[0][0]*dg->mat[0][2],
-                         -ekf->K[1][0]*dg->mat[1][0],1-ekf->K[1][0]*dg->mat[1][1],-ekf->K[1][0]*dg->mat[1][2],
-                         -ekf->K[2][0]*dg->mat[2][0],-ekf->K[2][0]*dg->mat[2][1],1-ekf->K[2][0]*dg->mat[2][2]};
+    double ikdg[3][3] = {1-ekf->K[0][0]*dg->mat[0],-ekf->K[0][0]*dg->mat[1],-ekf->K[0][0]*dg->mat[2],
+                         -ekf->K[1][0]*dg->mat[0],1-ekf->K[1][0]*dg->mat[1],-ekf->K[1][0]*dg->mat[2],
+                         -ekf->K[2][0]*dg->mat[0],-ekf->K[2][0]*dg->mat[1],1-ekf->K[2][0]*dg->mat[2]};
 
-    ekf->P[0][0] = ikdg[0][0]*ekf->P[0][0]*ikdg[0][0] + ekf->K[0][0]*ekf->R*ekf->K[0][0];
-    ekf->P[0][1] = ikdg[0][1]*ekf->P[0][1]*ikdg[1][0] + ekf->K[0][0]*ekf->R*ekf->K[1][0];
-    ekf->P[0][2] = ikdg[0][2]*ekf->P[0][2]*ikdg[2][0] + ekf->K[0][0]*ekf->R*ekf->K[2][0];
-    ekf->P[1][0] = ikdg[1][0]*ekf->P[1][0]*ikdg[0][1] + ekf->K[1][0]*ekf->R*ekf->K[0][0];
-    ekf->P[1][1] = ikdg[1][1]*ekf->P[1][1]*ikdg[1][1] + ekf->K[1][0]*ekf->R*ekf->K[1][0];
-    ekf->P[1][2] = ikdg[1][2]*ekf->P[1][2]*ikdg[2][1] + ekf->K[1][0]*ekf->R*ekf->K[2][0];
-    ekf->P[2][0] = ikdg[2][0]*ekf->P[2][0]*ikdg[0][2] + ekf->K[2][0]*ekf->R*ekf->K[0][0];
-    ekf->P[2][1] = ikdg[2][1]*ekf->P[2][1]*ikdg[1][2] + ekf->K[2][0]*ekf->R*ekf->K[1][0];
-    ekf->P[2][2] = ikdg[2][2]*ekf->P[2][2]*ikdg[2][2] + ekf->K[2][0]*ekf->R*ekf->K[2][0];
+    double P[3][3];
+
+    P[0][0] = ikdg[0][0]*ekf->P[0][0]+ikdg[0][1]*ekf->P[1][0]+ikdg[0][2]*ekf->P[2][0];
+    P[0][1] = ikdg[0][0]*ekf->P[0][1]+ikdg[0][1]*ekf->P[1][1]+ikdg[0][2]*ekf->P[2][1];
+    P[0][2] = ikdg[0][0]*ekf->P[0][2]+ikdg[0][1]*ekf->P[1][2]+ikdg[0][2]*ekf->P[2][2];
+    P[1][0] = ikdg[1][0]*ekf->P[0][0]+ikdg[1][1]*ekf->P[1][0]+ikdg[1][2]*ekf->P[2][0];
+    P[1][1] = ikdg[1][0]*ekf->P[0][1]+ikdg[1][1]*ekf->P[1][1]+ikdg[1][2]*ekf->P[2][1];
+    P[1][2] = ikdg[1][0]*ekf->P[0][2]+ikdg[1][1]*ekf->P[1][2]+ikdg[1][2]*ekf->P[2][2];
+    P[2][0] = ikdg[2][0]*ekf->P[0][0]+ikdg[2][1]*ekf->P[1][0]+ikdg[2][2]*ekf->P[2][0];
+    P[2][1] = ikdg[2][0]*ekf->P[0][1]+ikdg[2][1]*ekf->P[1][1]+ikdg[2][2]*ekf->P[2][1];
+    P[2][2] = ikdg[2][0]*ekf->P[0][2]+ikdg[2][1]*ekf->P[1][2]+ikdg[2][2]*ekf->P[2][2];
+
+    ekf->P[0][0] = P[0][0];
+    ekf->P[0][1] = P[0][1];
+    ekf->P[0][2] = P[0][2];
+    ekf->P[1][0] = P[1][0];
+    ekf->P[1][1] = P[1][1];
+    ekf->P[1][2] = P[1][2];
+    ekf->P[2][0] = P[2][0];
+    ekf->P[2][1] = P[2][1];
+    ekf->P[2][2] = P[2][2];
+
+    P[0][0] = ekf->P[0][0]*ikdg[0][0]+ekf->P[0][1]*ikdg[0][1]+ekf->P[0][2]*ikdg[0][2] + ekf->K[0][0]*ekf->K[0][0]*ekf->R;
+    P[0][1] = ekf->P[0][0]*ikdg[0][0]+ekf->P[0][1]*ikdg[0][1]+ekf->P[0][2]*ikdg[0][2] + ekf->K[0][0]*ekf->K[1][0]*ekf->R;
+    P[0][2] = ekf->P[0][0]*ikdg[0][0]+ekf->P[0][1]*ikdg[0][1]+ekf->P[0][2]*ikdg[0][2] + ekf->K[0][0]*ekf->K[2][0]*ekf->R;
+    P[1][0] = ekf->P[1][0]*ikdg[1][0]+ekf->P[1][1]*ikdg[1][1]+ekf->P[1][2]*ikdg[1][2] + ekf->K[1][0]*ekf->K[0][0]*ekf->R;
+    P[1][1] = ekf->P[1][0]*ikdg[1][0]+ekf->P[1][1]*ikdg[1][1]+ekf->P[1][2]*ikdg[1][2] + ekf->K[1][0]*ekf->K[1][0]*ekf->R;
+    P[1][2] = ekf->P[1][0]*ikdg[1][0]+ekf->P[1][1]*ikdg[1][1]+ekf->P[1][2]*ikdg[1][2] + ekf->K[1][0]*ekf->K[2][0]*ekf->R;
+    P[2][0] = ekf->P[2][0]*ikdg[2][0]+ekf->P[2][1]*ikdg[2][1]+ekf->P[2][2]*ikdg[2][2] + ekf->K[2][0]*ekf->K[0][0]*ekf->R;
+    P[2][1] = ekf->P[2][0]*ikdg[2][0]+ekf->P[2][1]*ikdg[2][1]+ekf->P[2][2]*ikdg[2][2] + ekf->K[2][0]*ekf->K[1][0]*ekf->R;
+    P[2][2] = ekf->P[2][0]*ikdg[2][0]+ekf->P[2][1]*ikdg[2][1]+ekf->P[2][2]*ikdg[2][2] + ekf->K[2][0]*ekf->K[2][0]*ekf->R;
+
+    ekf->P[0][0] = P[0][0];
+    ekf->P[0][1] = P[0][1];
+    ekf->P[0][2] = P[0][2];
+    ekf->P[1][0] = P[1][0];
+    ekf->P[1][1] = P[1][1];
+    ekf->P[1][2] = P[1][2];
+    ekf->P[2][0] = P[2][0];
+    ekf->P[2][1] = P[2][1];
+    ekf->P[2][2] = P[2][2];
+
+
+
 
     return ekf;
 
